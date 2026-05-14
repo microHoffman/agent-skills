@@ -23,12 +23,26 @@ to the user's project repository. For example, if this file is installed at
    - run `git status --short --branch`
    - ensure the intended changes are already committed; the helper publishes committed branch state only
    - local uncommitted or untracked files are not included in the MR
-2. Build a concise MR title and description from the actual change and verification performed.
-3. Run a dry run first with the bundled helper:
+2. Inspect the committed change before writing MR metadata:
+   - identify the target branch first, then use `git log --oneline <target>..HEAD`, `git diff --stat <target>..HEAD`, and focused diffs as needed
+   - infer the user-facing purpose of the branch from the actual code changes, not just the branch name or latest commit subject
+3. Decide whether the user provided explicit MR metadata:
+   - if the user's prompt clearly specifies a title/name, use that exact title instead of generating one
+   - if the user's prompt clearly specifies a description/body, use that exact description instead of generating one
+   - if only one field is explicit, generate only the missing field from the inspected change
+   - do not treat vague requests like "create a PR" or branch names as explicit metadata
+4. Build AI-written MR metadata for any field the user did not explicitly provide:
+   - title: short imperative or noun phrase describing the real change, not a placeholder like "test commit"
+   - description: 1-3 concise sentences, or a short `Summary` / `Verification` format when useful
+   - mention verification results only when tests/checks were actually run, and summarize outcomes instead of listing raw commands by default
+   - never include shell transcripts, literal `\n` escape text, credentials, or unrelated local status in the MR description
+   - if the diff is too small or unclear to infer meaningful intent, use a factual description of the exact change
+5. Run a dry run first with the bundled helper:
    - `<skill-dir>/scripts/gitlab-mr --dry-run --title "<title>" --description "<summary and test notes>"`
-4. If the dry run is correct, run the real command:
+   - for multiline descriptions, pass real newline characters (for example with shell ANSI-C quoting `$'...'`), not backslash-n text inside normal quotes
+6. If the dry run is correct, run the real command:
    - `<skill-dir>/scripts/gitlab-mr --title "<title>" --description "<summary and test notes>"`
-5. Report the returned GitLab MR URL.
+7. Report the returned GitLab MR URL.
 
 ## Command Options
 
