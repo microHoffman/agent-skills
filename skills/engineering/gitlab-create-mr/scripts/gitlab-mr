@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  gitlab-mr [options]
+
+Options:
+  --target <branch>          Target branch. Defaults to GITLAB_TARGET_BRANCH, origin/HEAD, master, then main.
+  --title <title>            Merge request title. Defaults to latest commit subject.
+  --description <text>       Merge request description. Defaults to recent commits ahead of target.
+  --draft                    Prefix title with "Draft: " unless it already starts with Draft/WIP.
+  --remove-source-branch     Ask GitLab to remove the source branch after merge.
+  --squash                   Ask GitLab to squash commits on merge.
+  --dry-run                  Print detected values and skip push/API calls.
+  -h, --help                 Show this help.
+
+Environment:
+  GITLAB_TOKEN               Required unless --dry-run is used.
+  GITLAB_HOST                Defaults to gitlab.tomatom.cz.
+  GITLAB_SCHEME              Defaults to https.
+  GITLAB_TARGET_BRANCH       Optional target branch default.
+USAGE
+}
+
+die() {
+  printf 'gitlab-mr: %s\n' "$*" >&2
+  exit 1
+}
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+urlencode() {
+  jq -rn --arg value "$1" '$value | @uri'
+}
+
+api_get() {
+  local url=$1
+  shift
+
+  curl --silent --show-error --fail --get \
+    --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+    "$url" \
+    "$@"
+}
+
+api_post_mr() {
+  local url=$1
+
+  curl --silent --show-error --fail \
+    --request POST \
+    --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+    --data-urlencode "source_branch=${source_branch}" \
+    --data-urlencode "target_branch=${target_branch}" \
+    --data-urlencode "title=${title}" \
+    --data-urlencode "description=${description}" \
+    --data "remove_source_branch=${remove_source_branch}" \
+    --data "squash=${squash}" \
+    "$url"
+}
+
+parse_project_path() {
+  local remote_url=$1
+  local host=$2
+  local path=
+
+  case "$remote_url" in
+    git@"$host":*)
+      path=${remote_url#git@"$host":}
+      ;;
+    ssh://git@"$host"/*)
+      path=${remote_url#ssh://git@"$host"/}
+      ;;
+    https://"$host"/*)
+      path=${remote_url#https://"$host"/}
+      ;;
+    http://"$host"/*)
+      path=${remote_url#http://"$host"/}
+      ;;
+    *)
+      die "origin remote is not hosted on ${host}: ${remote_url}"
+      ;;
+  esac
+
+  path=${path%.git}
+  [[ -n "$path" ]] || die "could not derive GitLab project path from origin remote"
+  printf '%s\n' "$path"
+}
+
+detect_target_branch() {
+  if [[ -n "${GITLAB_TARGET_BRANCH:-}" ]]; then
+    printf '%s\n' "$GITLAB_TARGET_BRANCH"
+    return
+  fi
+
+  local origin_head
+  origin_head=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)
+  if [[ -n "$origin_head" ]]; then
+    printf '%s\n' "${origin_head#origin/}"
+    return
+  fi
+
+  if git show-ref --verify --quiet refs/remotes/origin/master; then
+    printf 'master\n'
+    return
+  fi
+
+  if git show-ref --verify --quiet refs/remotes/origin/main; then
+    printf 'main\n'
+    return
+  fi
+
+  printf 'master\n'
+}
+
+target_branch=
+title=
+description=
+draft=false
+remove_source_branch=false
+squash=false
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target)
+      [[ $# -ge 2 ]] || die "--target requires a value"
+      target_branch=$2
+      shift 2
+      ;;
+    --title)
+      [[ $# -ge 2 ]] || die "--title requires a value"
+      title=$2
+      shift 2
+      ;;
+    --description)
+      [[ $# -ge 2 ]] || die "--description requires a value"
+      description=$2
+      shift 2
+      ;;
+    --draft)
+      draft=true
+      shift
+      ;;
+    --remove-source-branch)
+      remove_source_branch=true
+      shift
+      ;;
+    --squash)
+      squash=true
+      shift
+      ;;
+    --dry-run)
+      dry_run=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+need_cmd git
+need_cmd curl
+need_cmd jq
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository"
+
+git_root=$(git rev-parse --show-toplevel)
+cd "$git_root"
+
+source_branch=$(git branch --show-current)
+[[ -n "$source_branch" ]] || die "detached HEAD is not supported"
+
+remote_url=$(git config --get remote.origin.url || true)
+[[ -n "$remote_url" ]] || die "missing origin remote"
+
+gitlab_host=${GITLAB_HOST:-gitlab.tomatom.cz}
+gitlab_scheme=${GITLAB_SCHEME:-https}
+
+project_path=$(parse_project_path "$remote_url" "$gitlab_host")
+project_path_encoded=$(urlencode "$project_path")
+
+if [[ -z "$target_branch" ]]; then
+  target_branch=$(detect_target_branch)
+fi
+
+[[ "$source_branch" != "$target_branch" ]] || die "current branch is the target branch (${target_branch})"
+
+git show-ref --verify --quiet "refs/remotes/origin/${target_branch}" || die "target branch origin/${target_branch} is not available locally"
+
+ahead_count=$(git rev-list --count "origin/${target_branch}..HEAD")
+[[ "$ahead_count" -gt 0 ]] || die "current branch has no commits ahead of origin/${target_branch}"
+
+if [[ -z "$title" ]]; then
+  title=$(git log -1 --pretty=%s)
+fi
+
+if [[ "$draft" == true && ! "$title" =~ ^([Dd]raft|WIP): ]]; then
+  title="Draft: ${title}"
+fi
+
+if [[ -z "$description" ]]; then
+  description=$(
+    {
+      printf 'Created from `%s` by `gitlab-mr`.\n\n' "$source_branch"
+      printf 'Commits ahead of `%s`:\n' "$target_branch"
+      git log --reverse --pretty='- %s (%h)' "origin/${target_branch}..HEAD"
+    }
+  )
+fi
+
+api_base="${gitlab_scheme}://${gitlab_host}/api/v4"
+project_url="${api_base}/projects/${project_path_encoded}"
+mr_url="${project_url}/merge_requests"
+
+if [[ "$dry_run" == true ]]; then
+  cat <<DRYRUN
+Dry run: no branch push or GitLab API request will be performed.
+Git root: ${git_root}
+Remote: ${remote_url}
+Project: ${project_path}
+API: ${mr_url}
+Source branch: ${source_branch}
+Target branch: ${target_branch}
+Ahead commits: ${ahead_count}
+Title: ${title}
+Remove source branch: ${remove_source_branch}
+Squash: ${squash}
+
+Description:
+${description}
+
+Push command:
+git push -u origin ${source_branch}
+DRYRUN
+  exit 0
+fi
+
+[[ -n "${GITLAB_TOKEN:-}" ]] || die "GITLAB_TOKEN is not set"
+
+printf 'Pushing %s to origin...\n' "$source_branch"
+git push -u origin "$source_branch"
+
+existing=$(
+  api_get "$mr_url" \
+    --data-urlencode "state=opened" \
+    --data-urlencode "source_branch=${source_branch}" \
+    --data-urlencode "target_branch=${target_branch}" \
+    --data-urlencode "view=simple"
+)
+
+existing_url=$(jq -r '.[0].web_url // empty' <<<"$existing")
+if [[ -n "$existing_url" ]]; then
+  printf 'Existing merge request: %s\n' "$existing_url"
+  exit 0
+fi
+
+created=$(api_post_mr "$mr_url")
+created_url=$(jq -r '.web_url // empty' <<<"$created")
+[[ -n "$created_url" ]] || die "merge request was created but response did not include web_url: ${created}"
+
+printf 'Created merge request: %s\n' "$created_url"

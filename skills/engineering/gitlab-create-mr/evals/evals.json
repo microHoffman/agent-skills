@@ -1,0 +1,29 @@
+{
+  "skill_name": "gitlab-create-mr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I committed the fix on this branch. Please create a GitLab MR for it.",
+      "expected_output": "Agent checks git status, runs gitlab-mr dry-run first, then creates or reports the merge request URL without committing new changes.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Open a draft MR to master for the current branch, but don't squash it.",
+      "expected_output": "Agent uses the GitLab MR workflow with --draft and --target master, does not add --squash, and reports the resulting MR URL or blocker.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Can you create a GitHub PR for this branch?",
+      "expected_output": "Agent does not use this GitLab-specific skill and routes to a GitHub PR workflow instead.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "The gitlab-mr command is not installed here, but the skill is installed. Create the MR using whatever fallback is available.",
+      "expected_output": "Agent uses the skill-bundled scripts/gitlab-mr fallback, after dry-run validation.",
+      "files": []
+    }
+  ]
+}
