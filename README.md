@@ -2,10 +2,35 @@
 
 Personal AI agent skills.
 
-This repository is a multi-skill collection installed with skills.sh. The first included engineering skill is `gitlab-create-mr`, which lets Codex or another supported
-agent create GitLab merge requests on `gitlab.tomatom.cz`.
+This repository is a multi-skill collection installed with skills.sh. It keeps
+personal engineering skills that can be installed into Codex or another
+supported agent on any machine.
 
 ## Skills
+
+### create-pull-request
+
+Creates GitHub pull requests with project conventions, PR templates, detailed
+commit-message expectations, and proactive outside-sandbox handling for GitHub
+CLI operations.
+
+Install only this skill:
+
+```bash
+npx skills add https://github.com/microHoffman/agent-skills --skill create-pull-request
+```
+
+### github-issues
+
+Creates, updates, and manages GitHub issues using MCP tools for reads and
+authenticated `gh` CLI operations for writes, including outside-sandbox
+handling for permission-sensitive operations.
+
+Install only this skill:
+
+```bash
+npx skills add https://github.com/microHoffman/agent-skills --skill github-issues
+```
 
 ### gitlab-create-mr
 
@@ -30,6 +55,12 @@ No global `gitlab-mr` command is required. Agents should resolve this helper
 relative to the installed `SKILL.md`, not relative to the target project repo.
 
 ## Requirements
+
+For `create-pull-request` and `github-issues`:
+
+- `git`
+- GitHub CLI, `gh`
+- authenticated GitHub access through `gh auth login`
 
 For `gitlab-create-mr`:
 
@@ -69,8 +100,8 @@ Do not commit the real `env` file.
 
 ## Agent Usage
 
-After installing `gitlab-create-mr`, ask the agent to create a GitLab merge
-request for the current committed branch. The skill will:
+After installing a skill, ask the agent for the matching GitHub or GitLab
+workflow. For `gitlab-create-mr`, the skill will:
 
 - check the repository state
 - run a dry run first
