@@ -38,9 +38,11 @@ to the user's project repository. For example, if this file is installed at
    - never include shell transcripts, literal `\n` escape text, credentials, or unrelated local status in the MR description
    - if the diff is too small or unclear to infer meaningful intent, use a factual description of the exact change
 5. Run a dry run first with the bundled helper:
+   - ensure `GITLAB_TOKEN` is available before the dry run; if it is not already exported, run the dry run in a shell that sources `~/.config/gitlab-mr/env`
    - `<skill-dir>/scripts/gitlab-mr --dry-run --title "<title>" --description "<summary and test notes>"`
    - for multiline descriptions, pass real newline characters (for example with shell ANSI-C quoting `$'...'`), not backslash-n text inside normal quotes
 6. If the dry run is correct, run the real command:
+   - use the same credential environment as the dry run
    - `<skill-dir>/scripts/gitlab-mr --title "<title>" --description "<summary and test notes>"`
 7. Report the returned GitLab MR URL.
 
@@ -56,6 +58,7 @@ Use these only when they match the user's request or repo conventions:
 ## Credentials
 
 Never put tokens in the command, repository, MR description, or skill files. The helper reads credentials from `GITLAB_TOKEN`.
+The helper checks `GITLAB_TOKEN` during both dry-run and real runs, so missing credentials are caught before the branch push and GitLab API request.
 
 Expected local setup:
 
@@ -68,6 +71,7 @@ If `GITLAB_TOKEN` is missing, tell the user to create or source `~/.config/gitla
 ## Failure Handling
 
 - If the helper reports no commits ahead of target, do not create an MR; explain that the branch has nothing to publish.
+- If the helper reports that `GITLAB_TOKEN` is missing during dry-run, source `~/.config/gitlab-mr/env` in the same shell invocation and repeat the dry-run.
 - If an existing MR is returned, report that URL and do not create a duplicate.
 - If the user asks for a GitHub PR, do not use this skill; use the GitHub-specific workflow instead.
 - If the bundled helper is missing, report that the skill installation is incomplete and reinstall with `npx skills add https://github.com/microHoffman/agent-skills --skill gitlab-create-mr`.

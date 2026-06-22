@@ -13,11 +13,11 @@ Options:
   --draft                    Prefix title with "Draft: " unless it already starts with Draft/WIP.
   --remove-source-branch     Ask GitLab to remove the source branch after merge.
   --squash                   Ask GitLab to squash commits on merge.
-  --dry-run                  Print detected values and skip push/API calls.
+  --dry-run                  Print detected values and skip push/API calls, but still validate credentials.
   -h, --help                 Show this help.
 
 Environment:
-  GITLAB_TOKEN               Required unless --dry-run is used.
+  GITLAB_TOKEN               Required.
   GITLAB_HOST                Defaults to gitlab.tomatom.cz.
   GITLAB_SCHEME              Defaults to https.
   GITLAB_TARGET_BRANCH       Optional target branch default.
@@ -31,6 +31,10 @@ die() {
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+require_gitlab_token() {
+  [[ -n "${GITLAB_TOKEN:-}" ]] || die "GITLAB_TOKEN is not set; source ~/.config/gitlab-mr/env or export it"
 }
 
 urlencode() {
@@ -221,6 +225,8 @@ api_base="${gitlab_scheme}://${gitlab_host}/api/v4"
 project_url="${api_base}/projects/${project_path_encoded}"
 mr_url="${project_url}/merge_requests"
 
+require_gitlab_token
+
 if [[ "$dry_run" == true ]]; then
   cat <<DRYRUN
 Dry run: no branch push or GitLab API request will be performed.
@@ -228,6 +234,7 @@ Git root: ${git_root}
 Remote: ${remote_url}
 Project: ${project_path}
 API: ${mr_url}
+Credentials: GITLAB_TOKEN is set
 Source branch: ${source_branch}
 Target branch: ${target_branch}
 Ahead commits: ${ahead_count}
@@ -243,8 +250,6 @@ git push -u origin ${source_branch}
 DRYRUN
   exit 0
 fi
-
-[[ -n "${GITLAB_TOKEN:-}" ]] || die "GITLAB_TOKEN is not set"
 
 printf 'Pushing %s to origin...\n' "$source_branch"
 git push -u origin "$source_branch"
