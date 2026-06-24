@@ -8,6 +8,20 @@ supported agent on any machine.
 
 ## Skills
 
+### tanstack-query-angular
+
+Builds, refactors, reviews, and debugs TanStack Query usage in Angular
+applications using `@tanstack/angular-query-experimental`. Use it for Angular
+Query setup, query keys, signal-aware `injectQuery`, mutations, invalidation,
+pagination, tests, and migrations from manual `HttpClient`/RxJS server-state
+handling.
+
+Install only this skill:
+
+```bash
+npx skills add https://github.com/microHoffman/agent-skills --skill tanstack-query-angular
+```
+
 ### create-pull-request
 
 Creates GitHub pull requests with project conventions, PR templates, detailed
@@ -55,6 +69,12 @@ No global `gitlab-mr` command is required. Agents should resolve this helper
 relative to the installed `SKILL.md`, not relative to the target project repo.
 
 ## Requirements
+
+For `tanstack-query-angular`:
+
+- Angular application codebase
+- `@tanstack/angular-query-experimental`
+- Current TanStack Angular Query docs when exact experimental API syntax matters
 
 For `create-pull-request` and `github-issues`:
 

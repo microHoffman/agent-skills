@@ -1,0 +1,48 @@
+{
+  "skill_name": "tanstack-query-angular",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "In an Angular 17 app, replace a ProductsComponent that fetches product lists in ngOnInit with TanStack Angular Query. Use HttpClient, include search/page filters, and show the component/service shape.",
+      "expected_output": "Uses @tanstack/angular-query-experimental imports, provide/inject patterns, queryOptions, signal-aware injectQuery, serializable query keys, placeholderData for pagination, and no React Query APIs.",
+      "files": [],
+      "expectations": [
+        "The output imports Angular Query APIs from @tanstack/angular-query-experimental.",
+        "The output does not import from @tanstack/react-query and does not use React hooks such as useQuery or useMutation.",
+        "The output defines reusable query options, preferably through queryOptions or a feature query service.",
+        "The output uses injectQuery with a callback or computed options signal so Angular signals are read reactively.",
+        "The query key includes every server-state dependency, including search and page filters.",
+        "The paginated list keeps the previous page visible with placeholderData or an equivalent TanStack Query pattern."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add an Angular Query mutation for updating an order status. It should optimistically update the order detail cache, roll back on error, and invalidate affected order list queries.",
+      "expected_output": "Uses injectMutation and injected QueryClient, cancels matching queries before optimistic write, snapshots previous data, rolls back on error, and invalidates specific order keys on settled/success.",
+      "files": [],
+      "expectations": [
+        "The output uses injectMutation from @tanstack/angular-query-experimental.",
+        "The output injects or otherwise obtains QueryClient through Angular dependency injection.",
+        "The mutation cancels matching queries before writing optimistic cache data.",
+        "The mutation snapshots previous cache data before the optimistic update.",
+        "The mutation restores the previous cache data in onError when the server update fails.",
+        "The mutation invalidates specific affected order detail and order list query keys after the mutation settles or succeeds.",
+        "The output avoids broad global invalidation unless it explains why a narrower invalidation is not possible."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write the unit test setup for an Angular component that uses injectQuery. Explain how to avoid retries, devtools overhead, and cache leakage between specs.",
+      "expected_output": "Creates a fresh QueryClient with retry false, provides it through provideTanStackQuery, excludes devtools, clears the client after each test, and mentions cache seeding or HttpClient testing utilities.",
+      "files": [],
+      "expectations": [
+        "The output creates a fresh QueryClient for the test module or spec scope.",
+        "The test QueryClient disables query retries.",
+        "The output provides the test QueryClient with provideTanStackQuery.",
+        "The output excludes Angular Query devtools from test providers.",
+        "The output clears the QueryClient cache in afterEach or an equivalent teardown hook.",
+        "The output mentions cache seeding with queryClient.setQueryData or the app's HTTP testing utilities for HttpClient-backed query functions."
+      ]
+    }
+  ]
+}
