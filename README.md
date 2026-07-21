@@ -21,6 +21,10 @@ Install only this skill:
 npx skills add https://github.com/microHoffman/agent-skills --skill activecollab
 ```
 
+This installs the skill only. Install version 0.3.0 or newer of the
+[`activecollab` CLI](https://github.com/microHoffman/activecollab-cli/blob/main/docs/installation.md)
+separately before using it.
+
 ### tanstack-query-angular
 
 Builds, refactors, reviews, and debugs TanStack Query usage in Angular
