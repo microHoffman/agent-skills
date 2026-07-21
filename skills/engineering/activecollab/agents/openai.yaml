@@ -1,0 +1,4 @@
+interface:
+  display_name: "ActiveCollab"
+  short_description: "Handle ActiveCollab tasks and coding workflows"
+  default_prompt: "Use $activecollab to read the task context and carry out the requested workflow safely."

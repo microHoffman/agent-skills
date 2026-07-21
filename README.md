@@ -8,6 +8,19 @@ supported agent on any machine.
 
 ## Skills
 
+### activecollab
+
+Reads and manages ActiveCollab tasks as part of a coding workflow. It gathers
+task context, comments, history, subtasks, and attachments through the
+[`activecollab` CLI](https://github.com/microHoffman/activecollab-cli), then
+uses explicit authorization and CLI dry runs for mutations.
+
+Install only this skill:
+
+```bash
+npx skills add https://github.com/microHoffman/agent-skills --skill activecollab
+```
+
 ### tanstack-query-angular
 
 Builds, refactors, reviews, and debugs TanStack Query usage in Angular
@@ -70,6 +83,12 @@ relative to the installed `SKILL.md`, not relative to the target project repo.
 
 ## Requirements
 
+For `activecollab`:
+
+- [`activecollab` CLI](https://github.com/microHoffman/activecollab-cli)
+- an ActiveCollab account with an API token
+- `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` environment variables
+
 For `tanstack-query-angular`:
 
 - Angular application codebase
@@ -92,8 +111,12 @@ For `gitlab-create-mr`:
 
 ## Credentials
 
-The helper does not store credentials. It reads `GITLAB_TOKEN` from the
-environment.
+The ActiveCollab skill and GitLab helper do not store credentials. The
+ActiveCollab CLI reads `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` from the
+environment. Do not commit these values or pass the token as a command-line
+argument.
+
+The GitLab helper reads `GITLAB_TOKEN` from the environment.
 
 Recommended local setup:
 
@@ -120,8 +143,11 @@ Do not commit the real `env` file.
 
 ## Agent Usage
 
-After installing a skill, ask the agent for the matching GitHub or GitLab
-workflow. For `gitlab-create-mr`, the skill will:
+After installing `activecollab`, give the agent a task URL and ask it to inspect
+or implement the task. It will read the task context but will not comment,
+update fields, create subtasks, or complete work without explicit authorization.
+
+For `gitlab-create-mr`, the skill will:
 
 - check the repository state
 - run a dry run first
