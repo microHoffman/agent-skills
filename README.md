@@ -86,6 +86,7 @@ relative to the installed `SKILL.md`, not relative to the target project repo.
 For `activecollab`:
 
 - [`activecollab` CLI](https://github.com/microHoffman/activecollab-cli)
+- CLI version 0.3.0 or newer
 - an ActiveCollab account
 - a saved CLI login or `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` environment
   variables
@@ -120,11 +121,12 @@ activecollab auth login \
   --url https://activecollab.example.com/api/v1
 ```
 
-The CLI stores the resulting token in the OS credential store. To supply an
-existing token, pipe it from a secret manager with `--token-stdin`. For CI or a
-host without an OS credential store, the CLI also reads `ACTIVECOLLAB_URL` and
-`ACTIVECOLLAB_TOKEN` from the environment. Do not commit credentials, pass them
-as command-line arguments, or paste them into an agent conversation.
+The CLI stores the resulting URL, account, and token in its protected per-user
+credentials file. To supply an existing token, pipe it from a secret manager
+with `--token-stdin`. For CI or ephemeral sessions, the CLI also reads
+`ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` from the environment. Do not commit
+credentials, pass them as command-line arguments, or paste them into an agent
+conversation.
 
 The GitLab helper reads `GITLAB_TOKEN` from the environment.
 
