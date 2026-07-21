@@ -1,7 +1,9 @@
 # TanStack Query Angular API Notes
 
-These notes were drafted from Context7 results for TanStack Query Angular on 2026-06-24. Refresh against the official
-TanStack docs before publishing or when exact syntax changes matter.
+These notes summarize the official TanStack Query Angular documentation.
+Refresh them against the exact dependency version used by the project when
+experimental API syntax changes matter. GitHits may be used to inspect the
+matching upstream tag and current official documentation.
 
 Primary docs:
 

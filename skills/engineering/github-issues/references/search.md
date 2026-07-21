@@ -1,28 +1,28 @@
 # Advanced Issue Search
 
-The `search_issues` MCP tool uses GitHub's issue search query format for cross-repo searches, supporting implicit-AND queries, date ranges, and metadata filters (but not explicit OR/NOT operators).
+GitHub's issue search query format supports cross-repository search, date
+ranges, metadata filters, and boolean operators. Run it through `gh api`.
 
 ## When to Use Search vs List vs Advanced Search
 
-There are three ways to find issues, each with different capabilities:
+There are two useful ways to find issues, each with different capabilities:
 
-| Capability | `list_issues` (MCP) | `search_issues` (MCP) | Advanced search (`gh api`) |
-|-----------|---------------------|----------------------|---------------------------|
-| **Scope** | Single repo only | Cross-repo, cross-org | Cross-repo, cross-org |
-| **Issue field filters** (`field.priority:P0`) | No | No | **Yes** (dot notation) |
-| **Issue type filter** (`type:Bug`) | No | Yes | Yes |
-| **Boolean logic** (AND/OR/NOT, nesting) | No | Yes (implicit AND only) | **Yes** (explicit AND/OR/NOT) |
-| **Label/state/date filters** | Yes | Yes | Yes |
-| **Assignee/author/mentions** | No | Yes | Yes |
-| **Negation** (`-label:x`, `no:label`) | No | Yes | Yes |
-| **Text search** (title/body/comments) | No | Yes | Yes |
-| **`since` filter** | Yes | No | No |
-| **Result limit** | No cap (paginate all) | 1,000 max | 1,000 max |
-| **How to call** | MCP tool directly | MCP tool directly | `gh api` with `advanced_search=true` |
+| Capability | Repository listing (`gh issue list`) | Search (`gh api`) |
+|-----------|--------------------------------------|-------------------|
+| **Scope** | Single repo only | Cross-repo, cross-org |
+| **Issue field filters** (`field.priority:P0`) | No | **Yes** (dot notation) |
+| **Issue type filter** (`type:Bug`) | Limited | Yes |
+| **Boolean logic** (AND/OR/NOT, nesting) | No | **Yes** |
+| **Label/state/date filters** | Yes | Yes |
+| **Assignee/author/mentions** | Limited | Yes |
+| **Negation** (`-label:x`, `no:label`) | Limited | Yes |
+| **Text search** (title/body/comments) | Limited | Yes |
+| **Result limit** | Configure `--limit` | 1,000 max |
+| **How to call** | `gh issue list` | `gh api` with `advanced_search=true` |
 
 **Decision guide:**
-- **Single repo, simple filters (state, labels, recent updates):** use `list_issues`
-- **Cross-repo, text search, author/assignee, issue types:** use `search_issues`
+- **Single repo, simple filters (state, labels, recent updates):** use `gh issue list`
+- **Cross-repo, text search, author/assignee, issue types:** use `gh api search/issues`
 - **Issue field values (Priority, dates, custom fields) or complex boolean logic:** use `gh api` with `advanced_search=true`
 
 ## Query Syntax
@@ -202,8 +202,6 @@ has:field.priority                 # Has any value set
 no:field.priority                  # Has no value set
 ```
 
-**MCP limitation:** The `search_issues` MCP tool does not pass `advanced_search=true`. You must use `gh api` directly for issue field searches.
-
 ### Common Field Search Patterns
 
 **P0 epics across an org:**
@@ -225,7 +223,7 @@ org:github no:field.priority type:Bug is:open
 
 - Query text: max **256 characters** (excluding operators/qualifiers)
 - Boolean operators: max **5** AND/OR/NOT per query
-- Results: max **1,000** total (use `list_issues` if you need all issues)
+- Results: max **1,000** total (use `gh issue list` if you need all issues)
 - Repo scan: searches up to **4,000** matching repositories
 - Rate limit: **30 requests/minute** for authenticated search
-- Issue field search requires `advanced_search=true` (REST) or `ISSUE_ADVANCED` (GraphQL); not available through MCP `search_issues`
+- Issue field search requires `advanced_search=true` (REST) or `ISSUE_ADVANCED` (GraphQL)

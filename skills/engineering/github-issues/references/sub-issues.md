@@ -23,14 +23,6 @@ echo "{\"sub_issue_id\": $ISSUE_ID}" | gh api repos/{owner}/{repo}/issues/{paren
 
 Alternatively, use GraphQL `createIssue` with `parentIssueId` to do it in one step (see GraphQL section below).
 
-## Using MCP tools
-
-**List sub-issues:**
-Call `mcp__github__issue_read` with `method: "get_sub_issues"`, `owner`, `repo`, and `issue_number`.
-
-**Create an issue as a sub-issue:**
-There is no MCP tool for creating sub-issues directly. Use the workflow above or GraphQL.
-
 ## Using REST API
 
 **List sub-issues:**

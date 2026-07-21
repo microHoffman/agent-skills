@@ -1,20 +1,22 @@
 ---
 name: github-issues
-description: 'Create, update, and manage GitHub issues using MCP tools. Use this skill when users want to create bug reports, feature requests, or task issues, update existing issues, add labels/assignees/milestones, set issue fields (dates, priority, custom fields), set issue types, manage issue workflows, link issues, add dependencies, or track blocked-by/blocking relationships. Triggers on requests like "create an issue", "file a bug", "request a feature", "update issue X", "set the priority", "set the start date", "link issues", "add dependency", "blocked by", "blocking", or any GitHub issue management task.'
+description: 'Create, update, query, and manage GitHub issues using the authenticated GitHub CLI and GitHub REST or GraphQL APIs. Use this skill when users want to create bug reports, feature requests, or task issues, update existing issues, add labels/assignees/milestones, set issue fields (dates, priority, custom fields), set issue types, manage issue workflows, link issues, add dependencies, or track blocked-by/blocking relationships. Triggers on requests like "create an issue", "file a bug", "request a feature", "update issue X", "set the priority", "set the start date", "link issues", "add dependency", "blocked by", "blocking", or any GitHub issue management task.'
 ---
 
 # GitHub Issues
 
-Manage GitHub issues using the `@modelcontextprotocol/server-github` MCP server.
+Manage GitHub issues with the authenticated `gh` CLI. Use `gh issue` for
+straightforward reads and writes, `gh api` for REST features, and
+`gh api graphql` for Projects V2 and other GraphQL-only features.
 
 ## Sandbox Handling
 
 Run GitHub CLI operations outside Codex's default sandbox. Commands such as
 `gh auth status`, `gh api`, `gh issue`, and `gh pr` need network access and the
-user's authenticated `gh` credentials. GitHub App or MCP connector writes may
-also fail with `Resource not accessible by integration` even when the user's
-local `gh` token has permission, so prefer escalated `gh` CLI calls for writes
-and permission-sensitive GraphQL mutations.
+user's authenticated `gh` credentials. Integration tokens can fail with
+`Resource not accessible by integration` even when the user's local `gh` token
+has permission, so use the user's authenticated CLI for permission-sensitive
+reads and writes.
 
 When using `exec_command` for these operations, set
 `sandbox_permissions: "require_escalated"` with a concise justification and a
@@ -30,20 +32,16 @@ once in the sandbox and retrying after failure.
 
 ## Available Tools
 
-### MCP Tools (read operations)
+Use the narrowest `gh` interface that supports the operation:
 
-| Tool | Purpose |
-|------|---------|
-| `mcp__github__issue_read` | Read issue details, sub-issues, comments, labels (methods: get, get_comments, get_sub_issues, get_labels) |
-| `mcp__github__list_issues` | List and filter repository issues by state, labels, date |
-| `mcp__github__search_issues` | Search issues across repos using GitHub search syntax |
-| `mcp__github__projects_list` | List projects, project fields, project items, status updates |
-| `mcp__github__projects_get` | Get details of a project, field, item, or status update |
-| `mcp__github__projects_write` | Add/update/delete project items, create status updates |
+| Interface | Best for |
+|-----------|----------|
+| `gh issue view/list/status` | Common issue reads and repository summaries |
+| `gh issue create/edit/close/comment` | Common issue writes when all needed fields are supported |
+| `gh api` | REST features such as issue types, sub-issues, dependencies, and advanced search |
+| `gh api graphql` | Projects V2, issue fields, and GraphQL-only metadata |
 
-### CLI / REST API (write operations)
-
-The MCP server does not currently support creating, updating, or commenting on issues. Use `gh api` for these operations.
+Use `gh api` when a convenience command does not expose the required field.
 
 | Operation | Command |
 |-----------|---------|
@@ -60,7 +58,7 @@ The MCP server does not currently support creating, updating, or commenting on i
 1. **Determine action**: Create, update, or query?
 2. **Gather context**: Get repo info, existing labels, milestones if needed
 3. **Structure content**: Use appropriate template from [references/templates.md](references/templates.md)
-4. **Execute**: Use MCP tools for reads, `gh api` for writes
+4. **Execute**: Use `gh issue`, `gh api`, or `gh api graphql`
 5. **Confirm**: Report the issue URL to user
 
 ## Creating Issues
@@ -209,14 +207,16 @@ Use these standard labels when applicable:
 
 ## Extended Capabilities
 
-The following features require REST or GraphQL APIs beyond the basic MCP tools. Each is documented in its own reference file so the agent only loads the knowledge it needs.
+The following features require REST or GraphQL APIs beyond the basic `gh issue`
+commands. Each is documented in its own reference file so the agent only loads
+the knowledge it needs.
 
 | Capability | When to use | Reference |
 |------------|-------------|-----------|
 | Advanced search | Complex queries with boolean logic, date ranges, cross-repo search, issue field filters (`field.name:value`) | [references/search.md](references/search.md) |
 | Sub-issues & parent issues | Breaking work into hierarchical tasks | [references/sub-issues.md](references/sub-issues.md) |
 | Issue dependencies | Tracking blocked-by / blocking relationships | [references/dependencies.md](references/dependencies.md) |
-| Issue types (advanced) | GraphQL operations beyond MCP `list_issue_types` / `type` param | [references/issue-types.md](references/issue-types.md) |
+| Issue types (advanced) | Discovering and updating organization issue types through GraphQL | [references/issue-types.md](references/issue-types.md) |
 | Projects V2 | Project boards, progress reports, field management | [references/projects.md](references/projects.md) |
 | Issue fields | Custom metadata: dates, priority, text, numbers (private preview) | [references/issue-fields.md](references/issue-fields.md) |
 | Images in issues | Embedding images in issue bodies and comments via CLI | [references/images.md](references/images.md) |

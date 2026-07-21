@@ -1,33 +1,14 @@
 # Projects V2
 
-GitHub Projects V2 is managed via GraphQL. The MCP server provides three tools that wrap the GraphQL API, so you typically don't need raw GraphQL.
-
-## Using MCP tools (preferred)
-
-**List projects:**
-Call `mcp__github__projects_list` with `method: "list_projects"`, `owner`, and `owner_type` ("user" or "organization").
-
-**List project fields:**
-Call `mcp__github__projects_list` with `method: "list_project_fields"` and `project_number`.
-
-**List project items:**
-Call `mcp__github__projects_list` with `method: "list_project_items"` and `project_number`.
-
-**Add an issue/PR to a project:**
-Call `mcp__github__projects_write` with `method: "add_project_item"`, `project_id` (node ID), and `content_id` (issue/PR node ID).
-
-**Update a project item field value:**
-Call `mcp__github__projects_write` with `method: "update_project_item"`, `project_id`, `item_id`, `field_id`, and `value` (object with one of: `text`, `number`, `date`, `singleSelectOptionId`, `iterationId`).
-
-**Delete a project item:**
-Call `mcp__github__projects_write` with `method: "delete_project_item"`, `project_id`, and `item_id`.
+GitHub Projects V2 is managed via GraphQL. Use `gh api graphql` for reads and
+mutations so the workflow shares the user's existing GitHub CLI authentication.
 
 ## Workflow for project operations
 
 1. **Find the project** — see [Finding a project by name](#finding-a-project-by-name) below
-2. **Discover fields** - use `projects_list` with `list_project_fields` to get field IDs and option IDs
-3. **Find items** - use `projects_list` with `list_project_items` to get item IDs
-4. **Mutate** - use `projects_write` to add, update, or delete items
+2. **Discover fields** - query the project fields to get field IDs and option IDs
+3. **Find items** - query the project's items to get item IDs
+4. **Mutate** - use the corresponding GraphQL mutation to add, update, or delete items
 
 ## Finding a project by name
 
@@ -79,18 +60,15 @@ gh api graphql -f query='{
 
 If this returns nothing, paginate with `after` cursor or broaden the regex. Results are sorted by recency so older projects require pagination.
 
-### 4. MCP tool (small orgs only)
-Call `mcp__github__projects_list` with `method: "list_projects"`. This works well for orgs with <50 projects but has no name filter, so you must scan all results.
-
 ## Project discovery for progress reports
 
 When a user asks for a progress update on a project (e.g., "Give me a progress update for Project X"), follow this workflow:
 
 1. **Find the project** — use the [finding a project](#finding-a-project-by-name) strategies above. Ask the user for a known issue number if name search fails.
 
-2. **Discover fields** - call `projects_list` with `list_project_fields` to find the Status field (its options tell you the workflow stages) and any Iteration field (to scope to the current sprint).
+2. **Discover fields** - query the project fields to find the Status field (its options tell you the workflow stages) and any Iteration field (to scope to the current sprint).
 
-3. **Get all items** - call `projects_list` with `list_project_items`. For large projects (100+ items), paginate through all pages. Each item includes its field values (status, iteration, assignees).
+3. **Get all items** - query `ProjectV2.items`. For large projects (100+ items), paginate through all pages. Each item includes its field values (status, iteration, assignees).
 
 4. **Build the report** - group items by Status field value and count them. For iteration-based projects, filter to the current iteration first. Present a breakdown like:
 
@@ -153,7 +131,7 @@ This returns the item ID, project info, and current field values in one query.
 
 ## Using GraphQL via gh api (recommended)
 
-Use `gh api graphql` to run GraphQL queries and mutations. This is more reliable than MCP tools for write operations.
+Use `gh api graphql` to run GraphQL queries and mutations.
 
 **Find a project and its Status field options:**
 ```bash

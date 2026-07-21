@@ -1,0 +1,4 @@
+interface:
+  display_name: "TanStack Query Angular"
+  short_description: "Build and review Angular server state with TanStack Query"
+  default_prompt: "Use $tanstack-query-angular to implement or review TanStack Query in this Angular project."

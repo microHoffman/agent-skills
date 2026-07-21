@@ -53,9 +53,9 @@ npx skills add https://github.com/microHoffman/agent-skills --skill create-pull-
 
 ### github-issues
 
-Creates, updates, and manages GitHub issues using MCP tools for reads and
-authenticated `gh` CLI operations for writes, including outside-sandbox
-handling for permission-sensitive operations.
+Creates, updates, queries, and manages GitHub issues using authenticated `gh`
+CLI, REST, and GraphQL operations, including outside-sandbox handling for
+permission-sensitive operations.
 
 Install only this skill:
 
