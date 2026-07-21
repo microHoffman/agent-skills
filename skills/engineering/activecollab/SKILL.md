@@ -10,9 +10,10 @@ Use the `activecollab` CLI to turn an ActiveCollab task into coding context and,
 ## Preflight
 
 1. Check that `activecollab` is on `PATH`.
-2. Check that `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` are available without printing their values.
-3. If outbound network access is sandboxed, request network-capable execution before running any command that contacts ActiveCollab. With Codex `exec_command`, set `sandbox_permissions: "require_escalated"`, give a concise justification, and use a scoped prefix such as `["activecollab", "info"]` or `["activecollab", "task", "get"]`. Do this before the preflight instead of treating a sandbox network failure as server unavailability.
-4. Run `activecollab info --json` before the first task operation. If the server cannot be reached or its version is unsupported, report that before attempting a write.
+2. Run `activecollab auth status --json` without printing or otherwise retrieving the token. Environment credentials and saved OS-credential-store logins are both valid.
+3. If credentials are missing for self-hosted ActiveCollab, stop and tell the user to run `activecollab auth login --url https://their-server.example/api/v1` themselves in a terminal. Require the complete self-hosted URL ending in `/api/v1`. Never run interactive login through an agent tool, request a password or token in chat, or accept either secret as a command argument. For an existing token, direct the user to `activecollab auth login --url <self-hosted-api-url> --token-stdin` and have them pipe it from their secret manager.
+4. If outbound network access is sandboxed, request network-capable execution before running any command that contacts ActiveCollab. With Codex `exec_command`, set `sandbox_permissions: "require_escalated"`, give a concise justification, and use a scoped prefix such as `["activecollab", "info"]` or `["activecollab", "task", "get"]`. Do this before the network preflight instead of treating a sandbox network failure as server unavailability. `activecollab auth status` is local and does not need network access.
+5. Run `activecollab info --json` before the first task operation. If the server cannot be reached or its version is unsupported, report that before attempting a write.
 
 Accept either a full task URL or a numeric task ID plus `--project <id>`. Prefer the full URL because it carries both identifiers. Never reconstruct an API call with `curl` or expose the token when the CLI can perform the operation.
 

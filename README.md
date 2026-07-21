@@ -86,8 +86,9 @@ relative to the installed `SKILL.md`, not relative to the target project repo.
 For `activecollab`:
 
 - [`activecollab` CLI](https://github.com/microHoffman/activecollab-cli)
-- an ActiveCollab account with an API token
-- `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` environment variables
+- an ActiveCollab account
+- a saved CLI login or `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` environment
+  variables
 
 For `tanstack-query-angular`:
 
@@ -111,10 +112,19 @@ For `gitlab-create-mr`:
 
 ## Credentials
 
-The ActiveCollab skill and GitLab helper do not store credentials. The
-ActiveCollab CLI reads `ACTIVECOLLAB_URL` and `ACTIVECOLLAB_TOKEN` from the
-environment. Do not commit these values or pass the token as a command-line
-argument.
+The ActiveCollab skill never asks for or handles credentials. For a self-hosted
+server, run the CLI login yourself and pass the complete API-v1 URL:
+
+```bash
+activecollab auth login \
+  --url https://activecollab.example.com/api/v1
+```
+
+The CLI stores the resulting token in the OS credential store. To supply an
+existing token, pipe it from a secret manager with `--token-stdin`. For CI or a
+host without an OS credential store, the CLI also reads `ACTIVECOLLAB_URL` and
+`ACTIVECOLLAB_TOKEN` from the environment. Do not commit credentials, pass them
+as command-line arguments, or paste them into an agent conversation.
 
 The GitLab helper reads `GITLAB_TOKEN` from the environment.
 
