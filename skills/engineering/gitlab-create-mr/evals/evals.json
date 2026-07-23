@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "I committed the fix on this branch. Please create a GitLab MR for it.",
-      "expected_output": "Agent checks git status, runs gitlab-mr dry-run first, then creates or reports the merge request URL without committing new changes.",
+      "expected_output": "Agent checks git status and committed changes, prefers authenticated glab when available, otherwise uses the bundled gitlab-mr helper after a dry run, and creates or reports the merge request URL without committing new changes.",
       "files": []
     },
     {
@@ -21,8 +21,20 @@
     },
     {
       "id": 4,
-      "prompt": "The gitlab-mr command is not installed here, but the skill is installed. Create the MR using whatever fallback is available.",
+      "prompt": "The glab CLI is not installed here, but the skill is installed. Create the MR using whatever fallback is available.",
       "expected_output": "Agent uses the skill-bundled scripts/gitlab-mr fallback, after dry-run validation.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "glab is installed and already authenticated for gitlab.tomatom.cz. Publish this committed branch and open an MR.",
+      "expected_output": "Agent verifies glab authentication, checks for an existing MR, pushes the branch, and creates the MR with glab instead of requiring a separate GITLAB_TOKEN.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "glab is installed but not authenticated. GITLAB_TOKEN is already exported. Create the MR.",
+      "expected_output": "Agent falls back to the bundled scripts/gitlab-mr helper, runs its dry run first, then creates or reports the MR URL.",
       "files": []
     }
   ]

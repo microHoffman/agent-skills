@@ -76,14 +76,16 @@ Install only this skill:
 npx skills add https://github.com/microHoffman/agent-skills --skill gitlab-create-mr
 ```
 
-The skill includes its own runnable helper at:
+The skill prefers an authenticated `glab` CLI. It also includes its own runnable
+fallback helper at:
 
 ```text
 skills/engineering/gitlab-create-mr/scripts/gitlab-mr
 ```
 
-No global `gitlab-mr` command is required. Agents should resolve this helper
-relative to the installed `SKILL.md`, not relative to the target project repo.
+No global `gitlab-mr` command is required. Agents should resolve the fallback
+helper relative to the installed `SKILL.md`, not relative to the target project
+repo.
 
 ## Requirements
 
@@ -113,7 +115,8 @@ For `gitlab-create-mr`:
 - `git`
 - `curl`
 - `jq`
-- GitLab access token with permission to push branches and create merge requests
+- preferred: authenticated GitLab CLI, `glab`
+- fallback: GitLab access token with permission to push branches and create merge requests
 
 ## Credentials
 
@@ -132,7 +135,9 @@ with `--token-stdin`. For CI or ephemeral sessions, the CLI also reads
 credentials, pass them as command-line arguments, or paste them into an agent
 conversation.
 
-The GitLab helper reads `GITLAB_TOKEN` from the environment.
+The GitLab skill first uses credentials stored by `glab auth login`. If `glab`
+is unavailable or unauthenticated for `gitlab.tomatom.cz`, the fallback helper
+reads `GITLAB_TOKEN` from the environment.
 
 Recommended local setup:
 
@@ -166,7 +171,8 @@ update fields, create subtasks, or complete work without explicit authorization.
 For `gitlab-create-mr`, the skill will:
 
 - check the repository state
-- run a dry run first
+- prefer an authenticated `glab` CLI and reuse an existing open MR
+- otherwise run the bundled helper's dry run first
 - push the branch
 - create or reuse an open merge request
 
